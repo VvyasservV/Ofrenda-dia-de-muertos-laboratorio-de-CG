@@ -33,7 +33,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar.
 | Parte | Estado |
 |---|---|
 | Estructura del proyecto y librerias | Listo |
-| Codigo base, shaders y skybox | Pendiente |
+| Codigo base, shaders y skybox | Listo |
 | Modelos texturizados | Pendiente |
 | Escena del panteon | Pendiente |
 | 5 animaciones por codigo | Pendiente |
