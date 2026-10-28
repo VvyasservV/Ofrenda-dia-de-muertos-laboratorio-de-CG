@@ -26,7 +26,20 @@ build/      Ejecutable para la entrega
 
 ## Como compilar
 
-Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar.
+Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. El programa se corre desde la carpeta del proyecto (ahi estan `assets/` y `shaders/`).
+
+## Controles
+
+| Tecla | Accion |
+|---|---|
+| W A S D o flechas | Caminar |
+| Raton | Mirar alrededor |
+| F | Prender o apagar la linterna |
+| V | Prender o apagar las velas |
+| R | Prender o apagar el brillo de luna en los bordes (Fresnel) |
+| N | Prender o apagar la niebla |
+| + y - | Subir o bajar la luz de la luna |
+| Esc | Salir |
 
 ## Avance
 
@@ -34,8 +47,10 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar.
 |---|---|
 | Estructura del proyecto y librerias | Listo |
 | Codigo base, shaders y skybox | Listo |
-| Modelos texturizados | Pendiente |
-| Escena del panteon | Pendiente |
+| Modelos texturizados | Listo |
+| Imagen de referencia | Pendiente |
+| Escena del panteon | En proceso: escena base con luces |
 | 5 animaciones por codigo | Pendiente |
 | Ejecutable en build/ | Pendiente |
-| Manual de usuario y manual tecnico | Pendiente |
+| Manual de usuario | Pendiente |
+| Manual tecnico | Pendiente |
