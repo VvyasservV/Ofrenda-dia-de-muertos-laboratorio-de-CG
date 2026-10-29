@@ -41,6 +41,10 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | + y - | Subir o bajar la luz de la luna |
 | Esc | Salir |
 
+## Documentacion
+
+- [Imagenes de referencia](docs/referencias/)
+
 ## Avance
 
 | Parte | Estado |
@@ -48,7 +52,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Estructura del proyecto y librerias | Listo |
 | Codigo base, shaders y skybox | Listo |
 | Modelos texturizados | Listo |
-| Imagen de referencia | Pendiente |
+| Imagen de referencia | Listo |
 | Escena del panteon | En proceso: escena base con luces |
 | 5 animaciones por codigo | Pendiente |
 | Ejecutable en build/ | Pendiente |
