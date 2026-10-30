@@ -53,7 +53,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Codigo base, shaders y skybox | Listo |
 | Modelos texturizados | Listo |
 | Imagen de referencia | Listo |
-| Escena del panteon | En proceso: escena base con luces |
+| Escena del panteon | En proceso: falta la ofrenda, coronas, tapetes y papel picado |
 | 5 animaciones por codigo | Pendiente |
 | Ejecutable en build/ | Pendiente |
 | Manual de usuario | Pendiente |

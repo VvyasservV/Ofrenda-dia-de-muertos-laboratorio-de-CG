@@ -33,7 +33,7 @@ public:
 	}
 
 	// Draws the model, and thus all its meshes
-	void Draw(Shader shader)
+	void Draw(Shader &shader)
 	{
 		for (GLuint i = 0; i < this->meshes.size(); i++)
 		{
@@ -41,11 +41,34 @@ public:
 		}
 	}
 
+	// Esfera que envuelve todo el modelo (en sus coordenadas locales)
+	glm::vec3 Centro()
+	{
+		glm::vec3 mn(1e9f), mx(-1e9f);
+		for (auto &m : this->meshes)
+		{
+			mn = glm::min(mn, m.minimo);
+			mx = glm::max(mx, m.maximo);
+		}
+		return this->meshes.empty() ? glm::vec3(0.0f) : (mn + mx) * 0.5f;
+	}
+
+	float Radio()
+	{
+		glm::vec3 mn(1e9f), mx(-1e9f);
+		for (auto &m : this->meshes)
+		{
+			mn = glm::min(mn, m.minimo);
+			mx = glm::max(mx, m.maximo);
+		}
+		return this->meshes.empty() ? 0.0f : glm::length(mx - mn) * 0.5f;
+	}
+
 private:
 	/*  Model Data  */
 	vector<Mesh> meshes;
 	string directory;
-	vector<Texture> textures_loaded;	// Stores all the textures loaded so far
+	vector<Texture> textures_loaded;	// Stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
 
 										/*  Functions   */
 										// Loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
@@ -99,7 +122,7 @@ private:
 		for (GLuint i = 0; i < mesh->mNumVertices; i++)
 		{
 			Vertex vertex;
-			glm::vec3 vector; 
+			glm::vec3 vector; // We declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
 
 							  // Positions
 			vector.x = mesh->mVertices[i].x;
@@ -217,11 +240,11 @@ GLint TextureFromFile(const char *path, string directory)
 
 	int width, height;
 
-	unsigned char *image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	unsigned char *image = SOIL_load_image(filename.c_str(), &width, &height, 0, SOIL_LOAD_RGBA); // RGBA: el papel picado usa transparencia
 
 	// Assign texture to ID
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	// Parameters
