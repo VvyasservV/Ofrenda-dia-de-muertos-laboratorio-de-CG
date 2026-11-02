@@ -1,5 +1,7 @@
 // Proyecto final del laboratorio: Ofrenda de Dia de Muertos en un panteon
 // Basado en el codigo del laboratorio (fuentesDeLuz.cpp): Shader, Camera y Model del profesor.
+// Las animaciones son por codigo, con base en las practicas del laboratorio:
+//   1 viento en el papel picado (sencilla, Animacion basica)
 
 #include <iostream>
 #include <fstream>
@@ -33,6 +35,7 @@
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow *window, double xPos, double yPos);
 void DoMovement();
+void AvanzaAnimaciones(float dt);
 GLuint LoadCubemap(const std::vector<std::string> &faces);
 
 // Window dimensions
@@ -52,6 +55,11 @@ bool veladorasOn = true;     // V: velas (luces puntuales)
 bool fresnelOn = true;       // R: brillo de luna en los bordes (Fresnel)
 bool nieblaOn = true;        // N: niebla
 float lunaIntensidad = 1.0f; // + / -: intensidad de la luna
+
+// ---------------- Animaciones (teclas 1 a 5) ----------------
+// 1: viento en el papel picado. La fuerza sube y baja poco a poco; el vertex shader (viento.vs) mece las tiras.
+bool vientoOn = false;
+float fuerzaViento = 0.0f;
 
 // Escena: una linea por objeto en assets/escena_layout.txt
 struct Instancia
@@ -206,6 +214,7 @@ int main()
 	Shader lightingShader("shaders/lighting.vs", "shaders/lighting.frag");
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 	Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.frag");
+	Shader vientoShader("shaders/viento.vs", "shaders/lighting.frag");   // misma iluminacion, mueve las tiras
 
 	// Layout de la escena y modelos: cada modelo se carga una sola vez
 	std::vector<Instancia> layout = CargaLayout("assets/escena_layout.txt");
@@ -231,6 +240,10 @@ int main()
 	std::vector<Dibujo> dibujos;
 	for (auto &i : layout)
 	{
+		if (i.modelo == "papel_picado")
+		{
+			continue;   // se dibuja aparte (viento)
+		}
 		Dibujo d;
 		d.modelo = modelos[i.modelo];
 		d.lod = lods[i.modelo];
@@ -256,6 +269,19 @@ int main()
 		}
 	}
 	std::cout << velas.size() << " velas en la escena" << std::endl;
+
+	// ---------------- animaciones ----------------
+	// 1: papel picado, se dibuja con el shader del viento
+	Model *papelPicado = nullptr;
+	std::vector<glm::mat4> papeles;
+	for (auto &i : layout)
+	{
+		if (i.modelo == "papel_picado")
+		{
+			papeles.push_back(MatrizModelo(i));
+			papelPicado = modelos[i.modelo];
+		}
+	}
 	std::vector<int> orden(luzVela.size());
 
 	// VAO del cubo (skybox)
@@ -282,6 +308,9 @@ int main()
 	lightingShader.Use();
 	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
 	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 0); // usa la misma textura para el brillo
+	vientoShader.Use();
+	glUniform1i(glGetUniformLocation(vientoShader.Program, "material.diffuse"), 0);
+	glUniform1i(glGetUniformLocation(vientoShader.Program, "material.specular"), 0);
 	skyboxShader.Use();
 	glUniform1i(glGetUniformLocation(skyboxShader.Program, "skybox"), 0);
 
@@ -304,6 +333,8 @@ int main()
 		// Clear the colorbuffer
 		glClearColor(FOG_COLOR.x, FOG_COLOR.y, FOG_COLOR.z, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		AvanzaAnimaciones(deltaTime);
 
 		// Las luces se le pasan a cada shader que ilumina
 		glm::vec3 cam = camera.GetPosition();
@@ -439,6 +470,23 @@ int main()
 			m->Draw(lightingShader);
 		}
 		glBindVertexArray(0);
+		glBindVertexArray(0);
+
+		// 1: papel picado con viento (las puntas de los postes no se mueven)
+		vientoShader.Use();
+		ponLuces(vientoShader.Program);
+		glUniformMatrix4fv(glGetUniformLocation(vientoShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(vientoShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniform3f(glGetUniformLocation(vientoShader.Program, "tinte"), 1.0f, 1.0f, 1.0f);
+		glUniform1f(glGetUniformLocation(vientoShader.Program, "tiempo"), currentFrame);
+		glUniform1f(glGetUniformLocation(vientoShader.Program, "viento"), fuerzaViento);
+		for (int i = 0; papelPicado && i < (int)papeles.size(); i++)
+		{
+			glUniform1f(glGetUniformLocation(vientoShader.Program, "fase"), i * 1.3f);
+			glUniformMatrix4fv(glGetUniformLocation(vientoShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(papeles[i]));
+			papelPicado->Draw(vientoShader);
+		}
+		glBindVertexArray(0);
 
 		// Flamas de las velas: se estiran y encogen con el parpadeo (si las velas estan apagadas no se dibujan)
 		lampShader.Use();
@@ -534,6 +582,13 @@ GLuint LoadCubemap(const std::vector<std::string> &faces)
 	return textureID;
 }
 
+// Avanza el estado de cada animacion (se llama una vez por cuadro)
+void AvanzaAnimaciones(float dt)
+{
+	// 1: viento en el papel picado; la fuerza sube y baja poco a poco
+	fuerzaViento = glm::clamp(fuerzaViento + (vientoOn ? 0.7f : -0.7f) * dt, 0.0f, 1.0f);
+}
+
 // Moves/alters the camera positions based on user input
 void DoMovement()
 {
@@ -611,6 +666,9 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 		{
 			nieblaOn = !nieblaOn;
 		}
+
+		// Animaciones
+		if (key == GLFW_KEY_1) vientoOn = !vientoOn;
 	}
 }
 

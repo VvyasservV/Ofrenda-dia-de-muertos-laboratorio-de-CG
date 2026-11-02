@@ -39,6 +39,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | R | Prender o apagar el brillo de luna en los bordes (Fresnel) |
 | N | Prender o apagar la niebla |
 | + y - | Subir o bajar la luz de la luna |
+| 1 | Viento en el papel picado (sencilla) |
 | Esc | Salir |
 
 ## Documentacion
@@ -54,7 +55,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Modelos texturizados | Listo |
 | Imagen de referencia | Listo |
 | Escena del panteon | Listo |
-| 5 animaciones por codigo | Pendiente |
+| 5 animaciones por codigo | 1 de 5 |
 | Ejecutable en build/ | Pendiente |
 | Manual de usuario | Pendiente |
 | Manual tecnico | Pendiente |

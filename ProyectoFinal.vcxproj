@@ -26,6 +26,9 @@
     <None Include="shaders\lighting.vs" />
     <None Include="shaders\modelLoading.frag" />
     <None Include="shaders\modelLoading.vs" />
+    <None Include="shaders\skybox.frag" />
+    <None Include="shaders\skybox.vs" />
+    <None Include="shaders\viento.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
