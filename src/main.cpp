@@ -2,6 +2,7 @@
 // Basado en el codigo del laboratorio (fuentesDeLuz.cpp): Shader, Camera y Model del profesor.
 // Las animaciones son por codigo, con base en las practicas del laboratorio:
 //   1 viento en el papel picado (sencilla, Animacion basica)
+//   2 banda tocando (sencilla, Animacion basica sobre un modelo jerarquico)
 
 #include <iostream>
 #include <fstream>
@@ -60,6 +61,20 @@ float lunaIntensidad = 1.0f; // + / -: intensidad de la luna
 // 1: viento en el papel picado. La fuerza sube y baja poco a poco; el vertex shader (viento.vs) mece las tiras.
 bool vientoOn = false;
 float fuerzaViento = 0.0f;
+
+// 2: banda tocando. Cada musico es un modelo por partes (como el perro de la practica) y se mece con el ritmo.
+bool bandaOn = false;
+float tBanda = 0.0f;
+float fuerzaBanda = 0.0f;    // 0 a 1: suaviza el arranque y el final
+
+// Parte de un modelo jerarquico (una parte por OBJ con el origen en su articulacion), leido de pivotes.txt
+struct Parte
+{
+	std::string nombre;
+	Model *modelo;
+	glm::vec3 pivote;     // en el modelo completo
+	std::string padre;
+};
 
 // Escena: una linea por objeto en assets/escena_layout.txt
 struct Instancia
@@ -165,6 +180,121 @@ glm::mat4 MatrizModelo(const Instancia &i)
 float Parpadeo(int i, float t)
 {
 	return 0.80f + 0.12f * sin(t * 7.3f + i * 1.7f) + 0.08f * sin(t * 13.1f + i * 4.1f);
+}
+
+// Lee pivotes.txt de un modelo por partes y carga cada parte
+std::vector<Parte> CargaPartes(const std::string &carpeta)
+{
+	std::vector<Parte> partes;
+	std::ifstream f(carpeta + "/pivotes.txt");
+	std::string linea;
+	while (std::getline(f, linea))
+	{
+		if (linea.empty() || linea[0] == '#')
+		{
+			continue;
+		}
+		std::istringstream ss(linea);
+		Parte p;
+		ss >> p.nombre >> p.pivote.x >> p.pivote.y >> p.pivote.z >> p.padre;
+		std::string ruta = carpeta + "/" + p.nombre + ".obj";
+		p.modelo = new Model((char*)ruta.c_str());
+		partes.push_back(p);
+	}
+	return partes;
+}
+
+glm::vec3 PivoteDe(const std::vector<Parte> &partes, const std::string &nombre)
+{
+	for (auto &p : partes)
+	{
+		if (p.nombre == nombre)
+		{
+			return p.pivote;
+		}
+	}
+	return glm::vec3(0.0f);
+}
+
+// Dibuja un modelo por partes: cada parte = matriz de su padre * T(offset desde el padre) * R(su angulo)
+// giros: nombre de la parte -> (angulo x, angulo y, angulo z) en grados; mueve: traslacion extra de una parte
+std::map<std::string, glm::mat4> extraPartes;   // matriz extra de alguna parte (el brazo del trombon), en su articulacion
+
+void DibujaPartes(std::vector<Parte> &partes, const glm::mat4 &base, std::map<std::string, glm::vec3> &giros,
+	std::map<std::string, glm::vec3> &mueve, Shader &shader, GLint modelLoc)
+{
+	std::map<std::string, glm::mat4> mats;
+	for (auto &p : partes)   // en pivotes.txt los padres van antes que sus hijos
+	{
+		bool tienePadre = mats.count(p.padre) > 0;
+		glm::mat4 m = tienePadre ? mats[p.padre] : base;
+		glm::vec3 offset = tienePadre ? p.pivote - PivoteDe(partes, p.padre) : p.pivote;
+		m = glm::translate(m, offset + (mueve.count(p.nombre) ? mueve[p.nombre] : glm::vec3(0.0f)));
+		if (giros.count(p.nombre))
+		{
+			glm::vec3 g = giros[p.nombre];
+			m = glm::rotate(m, glm::radians(g.y), glm::vec3(0.0f, 1.0f, 0.0f));
+			m = glm::rotate(m, glm::radians(g.x), glm::vec3(1.0f, 0.0f, 0.0f));
+			m = glm::rotate(m, glm::radians(g.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		}
+		if (extraPartes.count(p.nombre))
+		{
+			m = m * extraPartes[p.nombre];
+		}
+		mats[p.nombre] = m;
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(m));
+		p.modelo->Draw(shader);
+	}
+}
+
+// Pose de cada musico de la banda: el cuerpo se mece y rebota con el ritmo, el torso se inclina,
+// los de percusion golpean con los brazos y el trombon mueve la vara. k (0 a 1) suaviza el arranque y el final.
+void PoseMusico(const std::string &id, int i, float t, float k, std::map<std::string, glm::vec3> &giros,
+	std::map<std::string, glm::vec3> &mueve, glm::vec3 dirVara)
+{
+	const float PI2 = 6.2831853f;
+	float pulso = t * 2.0f;                       // 120 golpes por minuto
+	float vaiven = sin(PI2 * 0.5f * pulso + i * 0.7f);
+	giros["cuerpo"] = glm::vec3(0.0f, 6.0f * k * vaiven, 0.0f);
+	giros["torso"] = glm::vec3(-4.0f * k * fabs(sin(PI2 * 0.5f * pulso)), 0.0f, 5.0f * k * vaiven);
+	mueve["cuerpo"] = glm::vec3(0.0f, 0.02f * k * fabs(sin(PI2 * 0.5f * pulso + i)), 0.0f);
+	if (id == "tarola" || id == "tambora")
+	{
+		float golpeDer = glm::max(0.0f, sin(PI2 * pulso));
+		float golpeIzq = glm::max(0.0f, sin(PI2 * pulso + 3.1416f));
+		if (id == "tambora")
+		{
+			golpeIzq = 0.5f * glm::max(0.0f, sin(PI2 * 0.5f * pulso));   // el platillo cada dos tiempos
+		}
+		giros["brazoder"] = glm::vec3(-35.0f * k * golpeDer, 0.0f, 0.0f);
+		giros["brazoizq"] = glm::vec3(-35.0f * k * golpeIzq, 0.0f, 0.0f);
+	}
+	else if (id == "trombon")
+	{
+		float v = 0.5f - 0.5f * cos(PI2 * 0.25f * pulso);
+		float sale = 0.32f * k * v;                  // la vara sale hasta 0.4 m sin despegarse
+		mueve["vara"] = dirVara * sale;
+		// la mano derecha va agarrada de la vara: el brazo gira desde el hombro hacia donde quedo la mano
+		// y se estira lo que haga falta (h: del hombro a la mano en reposo)
+		glm::vec3 h(0.153f, -0.019f, 0.419f);
+		glm::vec3 h2 = h + dirVara * sale;
+		glm::vec3 a = glm::normalize(h), b = glm::normalize(h2);
+		float ang = acos(glm::clamp(glm::dot(a, b), -1.0f, 1.0f));
+		glm::vec3 eje = glm::cross(a, b);
+		glm::mat4 r(1.0f);
+		if (glm::length(eje) > 1e-5f)
+		{
+			r = glm::rotate(glm::mat4(1.0f), ang, glm::normalize(eje));
+		}
+		float estira = glm::length(h2) / glm::length(h);
+		glm::mat3 e = glm::mat3(1.0f) + (estira - 1.0f) * glm::outerProduct(a, a);
+		extraPartes["brazoder"] = r * glm::mat4(e);
+	}
+	else
+	{
+		// trompetas, clarinete y tuba: suben un poco el instrumento al tocar
+		giros["torso"].x += -6.0f * k * (0.5f + 0.5f * sin(PI2 * 0.25f * pulso + i));
+	}
 }
 
 int main()
@@ -280,6 +410,56 @@ int main()
 		{
 			papeles.push_back(MatrizModelo(i));
 			papelPicado = modelos[i.modelo];
+		}
+	}
+
+	// Donde quedan la banda y el nino que saluda (assets/animaciones_layout.txt)
+	glm::mat4 lugarBanda(1.0f);
+	{
+		std::ifstream f("assets/animaciones_layout.txt");
+		std::string linea;
+		while (std::getline(f, linea))
+		{
+			if (linea.empty() || linea[0] == '#')
+			{
+				continue;
+			}
+			std::istringstream ss(linea);
+			std::string nombre;
+			glm::vec3 p;
+			float r;
+			ss >> nombre >> p.x >> p.y >> p.z >> r;
+			glm::mat4 m = glm::rotate(glm::translate(glm::mat4(1.0f), p), glm::radians(r), glm::vec3(0.0f, 1.0f, 0.0f));
+			if (nombre == "banda") lugarBanda = m;
+		}
+	}
+
+	// 2: banda, siete musicos por partes acomodados en arco (assets/models/banda/banda_layout.txt)
+	struct Musico
+	{
+		std::string id;
+		std::vector<Parte> partes;
+		glm::mat4 lugar;
+	};
+	std::vector<Musico> banda;
+	glm::vec3 dirVara(0.0f, -0.309f, 0.951f);
+	{
+		std::ifstream f("assets/models/banda/banda_layout.txt");
+		std::string linea;
+		while (std::getline(f, linea))
+		{
+			if (linea.empty() || linea[0] == '#')
+			{
+				continue;
+			}
+			std::istringstream ss(linea);
+			Musico m;
+			glm::vec3 p;
+			float r;
+			ss >> m.id >> p.x >> p.y >> p.z >> r;
+			m.partes = CargaPartes("assets/models/banda/musico_" + m.id);
+			m.lugar = glm::rotate(glm::translate(lugarBanda, p), glm::radians(r), glm::vec3(0.0f, 1.0f, 0.0f));
+			banda.push_back(m);
 		}
 	}
 	std::vector<int> orden(luzVela.size());
@@ -470,6 +650,18 @@ int main()
 			m->Draw(lightingShader);
 		}
 		glBindVertexArray(0);
+
+		// ---------------- animaciones por codigo ----------------
+		glUniform3f(tinteLoc, 1.0f, 1.0f, 1.0f);
+		// 2: banda
+		for (int i = 0; i < (int)banda.size(); i++)
+		{
+			std::map<std::string, glm::vec3> giros, mueve;
+			extraPartes.clear();
+			PoseMusico(banda[i].id, i, tBanda, fuerzaBanda, giros, mueve, dirVara);
+			DibujaPartes(banda[i].partes, banda[i].lugar, giros, mueve, lightingShader, modelLoc);
+		}
+		extraPartes.clear();
 		glBindVertexArray(0);
 
 		// 1: papel picado con viento (las puntas de los postes no se mueven)
@@ -587,6 +779,10 @@ void AvanzaAnimaciones(float dt)
 {
 	// 1: viento en el papel picado; la fuerza sube y baja poco a poco
 	fuerzaViento = glm::clamp(fuerzaViento + (vientoOn ? 0.7f : -0.7f) * dt, 0.0f, 1.0f);
+
+	// 2: banda; la fuerza sube y baja en medio segundo para que no arranquen ni paren de golpe
+	fuerzaBanda = glm::clamp(fuerzaBanda + (bandaOn ? 2.0f : -2.0f) * dt, 0.0f, 1.0f);
+	if (fuerzaBanda > 0.0f) tBanda += dt;
 }
 
 // Moves/alters the camera positions based on user input
@@ -669,6 +865,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 
 		// Animaciones
 		if (key == GLFW_KEY_1) vientoOn = !vientoOn;
+		if (key == GLFW_KEY_2) bandaOn = !bandaOn;
 	}
 }
 
