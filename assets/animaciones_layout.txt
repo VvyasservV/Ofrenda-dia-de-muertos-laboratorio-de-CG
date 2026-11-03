@@ -1,0 +1,2 @@
+# Animaciones por codigo que se dibujan en un lugar fijo de la escena: nombre  x y z  rotY(grados)  (coordenadas de OpenGL)
+banda -3.050 0.000 6.800 90.0
