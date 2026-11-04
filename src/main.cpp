@@ -4,6 +4,7 @@
 //   1 viento en el papel picado (sencilla, Animacion basica)
 //   2 banda tocando (sencilla, Animacion basica sobre un modelo jerarquico)
 //   3 reja de la entrada que se abre (sencilla, Animacion basica)
+//   4 nino que saluda (compleja, Maquina de estados)
 
 #include <iostream>
 #include <fstream>
@@ -75,6 +76,15 @@ const float REJA_SEGUNDOS = 3.0f;
 const float REJA_ANGULO = 95.0f;
 const glm::vec3 BISAGRA_IZQ(-1.76f, 0.0f, 10.0f);
 const glm::vec3 BISAGRA_DER(1.76f, 0.0f, 10.0f);
+
+// 4: nino que saluda (maquina de estados, como Maquina de estados.cpp)
+bool saludoOn = false;
+enum EstadoSaludo { QUIETO, SUBE_BRAZO, SALUDA, BAJA_BRAZO };
+EstadoSaludo estadoSaludo = QUIETO;
+float brazoSaludo = 0.0f;    // grados que sube el brazo derecho (0 = abajo, 150 = arriba)
+float manoSaludo = 0.0f;     // grados que se mueve el antebrazo de lado a lado
+bool manoDerecha = true;
+float cabezaSaludo = 0.0f;
 
 // Parte de un modelo jerarquico (una parte por OBJ con el origen en su articulacion), leido de pivotes.txt
 struct Parte
@@ -423,6 +433,7 @@ int main()
 	}
 
 	// Donde quedan la banda y el nino que saluda (assets/animaciones_layout.txt)
+	glm::mat4 lugarSaludo(1.0f);
 	glm::mat4 lugarBanda(1.0f);
 	{
 		std::ifstream f("assets/animaciones_layout.txt");
@@ -439,6 +450,7 @@ int main()
 			float r;
 			ss >> nombre >> p.x >> p.y >> p.z >> r;
 			glm::mat4 m = glm::rotate(glm::translate(glm::mat4(1.0f), p), glm::radians(r), glm::vec3(0.0f, 1.0f, 0.0f));
+			if (nombre == "nino_saluda") lugarSaludo = m;
 			if (nombre == "banda") lugarBanda = m;
 		}
 	}
@@ -475,6 +487,9 @@ int main()
 	// 3: las dos hojas de la reja (cada OBJ tiene su origen en la bisagra)
 	Model rejaIzq((char*)"assets/models/reja/reja_hoja_izq.obj");
 	Model rejaDer((char*)"assets/models/reja/reja_hoja_der.obj");
+
+	// 4: nino que saluda (modelo por partes, como el perro de la practica)
+	std::vector<Parte> ninoSaluda = CargaPartes("assets/models/persona_nino_partes");
 	std::vector<int> orden(luzVela.size());
 
 	// VAO del cubo (skybox)
@@ -686,6 +701,14 @@ int main()
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 			rejaDer.Draw(lightingShader);
 		}
+		{
+			// 4: nino que saluda: el brazo derecho sube de lado y el antebrazo va y viene
+			std::map<std::string, glm::vec3> giros, mueve;
+			giros["brazoder"] = glm::vec3(0.0f, 0.0f, -brazoSaludo);
+			giros["antebrazoder"] = glm::vec3(0.0f, 0.0f, manoSaludo - 0.25f * brazoSaludo);
+			giros["cabeza"] = glm::vec3(0.0f, 0.0f, cabezaSaludo);
+			DibujaPartes(ninoSaluda, lugarSaludo, giros, mueve, lightingShader, modelLoc);
+		}
 		glBindVertexArray(0);
 
 		// 1: papel picado con viento (las puntas de los postes no se mueven)
@@ -810,6 +833,42 @@ void AvanzaAnimaciones(float dt)
 
 	// 3: la reja se abre o se cierra (el mismo movimiento hacia adelante o hacia atras)
 	tReja = glm::clamp(tReja + (rejaAbierta ? dt : -dt), 0.0f, REJA_SEGUNDOS);
+
+	// 4: nino que saluda (maquina de estados)
+	switch (estadoSaludo)
+	{
+	case QUIETO:
+		if (saludoOn) estadoSaludo = SUBE_BRAZO;
+		break;
+	case SUBE_BRAZO:
+		brazoSaludo += 150.0f * dt;
+		cabezaSaludo = glm::min(cabezaSaludo + 20.0f * dt, 8.0f);
+		if (brazoSaludo >= 150.0f)
+		{
+			brazoSaludo = 150.0f;
+			estadoSaludo = SALUDA;
+		}
+		break;
+	case SALUDA:
+		manoSaludo += (manoDerecha ? 120.0f : -120.0f) * dt;
+		if (manoSaludo > 25.0f) manoDerecha = false;
+		if (manoSaludo < -25.0f) manoDerecha = true;
+		if (!saludoOn && fabs(manoSaludo) < 4.0f)
+		{
+			manoSaludo = 0.0f;
+			estadoSaludo = BAJA_BRAZO;
+		}
+		break;
+	case BAJA_BRAZO:
+		brazoSaludo -= 120.0f * dt;
+		cabezaSaludo = glm::max(cabezaSaludo - 20.0f * dt, 0.0f);
+		if (brazoSaludo <= 0.0f)
+		{
+			brazoSaludo = 0.0f;
+			estadoSaludo = QUIETO;
+		}
+		break;
+	}
 }
 
 // Moves/alters the camera positions based on user input
@@ -894,6 +953,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 		if (key == GLFW_KEY_1) vientoOn = !vientoOn;
 		if (key == GLFW_KEY_2) bandaOn = !bandaOn;
 		if (key == GLFW_KEY_3) rejaAbierta = !rejaAbierta;
+		if (key == GLFW_KEY_4) saludoOn = !saludoOn;
 	}
 }
 
