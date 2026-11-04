@@ -3,6 +3,7 @@
 // Las animaciones son por codigo, con base en las practicas del laboratorio:
 //   1 viento en el papel picado (sencilla, Animacion basica)
 //   2 banda tocando (sencilla, Animacion basica sobre un modelo jerarquico)
+//   3 reja de la entrada que se abre (sencilla, Animacion basica)
 
 #include <iostream>
 #include <fstream>
@@ -66,6 +67,14 @@ float fuerzaViento = 0.0f;
 bool bandaOn = false;
 float tBanda = 0.0f;
 float fuerzaBanda = 0.0f;    // 0 a 1: suaviza el arranque y el final
+
+// 3: reja de la entrada. Cada hoja gira sobre su bisagra hasta 95 grados.
+bool rejaAbierta = false;
+float tReja = 0.0f;                        // 0 = cerrada, REJA_SEGUNDOS = abierta
+const float REJA_SEGUNDOS = 3.0f;
+const float REJA_ANGULO = 95.0f;
+const glm::vec3 BISAGRA_IZQ(-1.76f, 0.0f, 10.0f);
+const glm::vec3 BISAGRA_DER(1.76f, 0.0f, 10.0f);
 
 // Parte de un modelo jerarquico (una parte por OBJ con el origen en su articulacion), leido de pivotes.txt
 struct Parte
@@ -462,6 +471,10 @@ int main()
 			banda.push_back(m);
 		}
 	}
+
+	// 3: las dos hojas de la reja (cada OBJ tiene su origen en la bisagra)
+	Model rejaIzq((char*)"assets/models/reja/reja_hoja_izq.obj");
+	Model rejaDer((char*)"assets/models/reja/reja_hoja_der.obj");
 	std::vector<int> orden(luzVela.size());
 
 	// VAO del cubo (skybox)
@@ -662,6 +675,17 @@ int main()
 			DibujaPartes(banda[i].partes, banda[i].lugar, giros, mueve, lightingShader, modelLoc);
 		}
 		extraPartes.clear();
+		{
+			// 3: reja, model = T(bisagra) * Ry(angulo); la hoja izquierda abre hacia un lado y la derecha hacia el otro
+			float u = tReja / REJA_SEGUNDOS;
+			float angulo = REJA_ANGULO * u * u * (3.0f - 2.0f * u);   // arranca y frena despacio
+			glm::mat4 model = glm::rotate(glm::translate(glm::mat4(1.0f), BISAGRA_IZQ), glm::radians(angulo), glm::vec3(0.0f, 1.0f, 0.0f));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			rejaIzq.Draw(lightingShader);
+			model = glm::rotate(glm::translate(glm::mat4(1.0f), BISAGRA_DER), glm::radians(-angulo), glm::vec3(0.0f, 1.0f, 0.0f));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			rejaDer.Draw(lightingShader);
+		}
 		glBindVertexArray(0);
 
 		// 1: papel picado con viento (las puntas de los postes no se mueven)
@@ -783,6 +807,9 @@ void AvanzaAnimaciones(float dt)
 	// 2: banda; la fuerza sube y baja en medio segundo para que no arranquen ni paren de golpe
 	fuerzaBanda = glm::clamp(fuerzaBanda + (bandaOn ? 2.0f : -2.0f) * dt, 0.0f, 1.0f);
 	if (fuerzaBanda > 0.0f) tBanda += dt;
+
+	// 3: la reja se abre o se cierra (el mismo movimiento hacia adelante o hacia atras)
+	tReja = glm::clamp(tReja + (rejaAbierta ? dt : -dt), 0.0f, REJA_SEGUNDOS);
 }
 
 // Moves/alters the camera positions based on user input
@@ -866,6 +893,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 		// Animaciones
 		if (key == GLFW_KEY_1) vientoOn = !vientoOn;
 		if (key == GLFW_KEY_2) bandaOn = !bandaOn;
+		if (key == GLFW_KEY_3) rejaAbierta = !rejaAbierta;
 	}
 }
 

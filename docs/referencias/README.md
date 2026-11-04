@@ -1,28 +1,20 @@
-# Imagenes de referencia
+# Imagenes de referencia por objeto
 
-El espacio que recreamos es un panteon mexicano en la noche de Dia de Muertos, con una ofrenda tradicional frente a la capilla. Tomamos como referencia estas imagenes:
+Para cada uno de los objetos principales del proyecto usamos una foto real como referencia. En `comparaciones/` esta cada foto junto a nuestro modelo, y en `comparacion_objetos.jpg` estan todas juntas.
 
-| Archivo | Que muestra |
-|---|---|
-| `ofrenda_referencia.jpg` | Ofrenda tradicional de Dia de Muertos de varios niveles. Es la referencia principal del proyecto. |
-| `catrina_referencia.jpg` | Catrina de barro pintada a mano, que usamos para la catrina de la entrada. |
-| `comparacion_ofrenda.jpg` | La imagen de referencia junto a nuestra recreacion en OpenGL. |
+Las fotos de paginas web (noticias y recetas) tienen derechos reservados de sus autores; solo se usan como referencia visual y se cita la pagina y la imagen original. Las de Wikimedia Commons tienen licencia libre (Creative Commons).
 
-## Objetos de la referencia que recreamos
+| Objeto | Foto | Fuente | Autor | Licencia |
+|---|---|---|---|---|
+| Ofrenda | `fotos/ofrenda.jpg` | [Ofrenda de Dia de Muertos in Coyoacan](https://commons.wikimedia.org/wiki/File:Ofrenda_de_D%C3%ADa_de_Muertos_in_Coyoac%C3%A1n.jpg) (Wikimedia Commons) | Ines Suarez R. | CC BY-SA 4.0 |
+| Vela | `fotos/vela.jpg` | [Cuatro consejos para usar la flor de cempasuchil en la ofrenda](https://www.adn40.mx/es-tendencia/2024-10-15/cuatro-consejos-para-usar-la-flor-cempasuchil-ofrenda-del-dia-de-muertos) ([imagen](https://tvazteca-adnnoticias-prod.web.arc-cdn.net/resizer/v2/H3BC3B76IRGDHKMKCP5ZTBGVFY.jpg?smart=true&auth=7f1efbf80522c9b9e523a2ec09896b6e7663f7ec984d916cdddca8c81b0dc693&width=1200&height=630)) | ADN40 | Derechos reservados, citada como fuente |
+| Calaverita de azucar | `fotos/calaverita.jpg` | [Como hacer calaveritas de azucar](https://www.aztecajalisco.com/arte-y-cultura/como-hacer-calaveritas-de-azucar/) ([imagen](https://tvazteca-jalisco-prod.web.arc-cdn.net/resizer/v2/BJTLFQ234FBY5GBO432AWHCHJA.jpg?smart=true&auth=024b85fdc23f439d9ff40c651c56114bc37e1907cce8ff6473aa9a79f8487a2d&width=1200&height=630)) | TV Azteca Jalisco | Derechos reservados, citada como fuente |
+| Portarretratos | `fotos/portarretratos.jpg` | [Aura Frames quiere reunir mas recuerdos familiares en las ofrendas de Dia de Muertos](https://global.techradar.com/es-mx/cameras/photography/aura-frames-quiere-reunir-mas-recuerdos-familiares-en-las-ofrendas-de-dia-de-muertos) ([imagen](https://cdn.mos.cms.futurecdn.net/48AWtAETSVreP9qvQA7hga.jpg)) | TechRadar Mexico | Derechos reservados, citada como fuente |
+| Flor de cempasuchil | `fotos/cempasuchil.jpg` | [Dia de Muertos: 6 cosas que debes saber de la flor de cempasuchil](https://www.viveusa.mx/compras/dia-de-muertos-6-cosas-que-debes-saber-de-la-flor-de-cempasuchil/) ([imagen](https://www.viveusa.mx/resizer/v2/7JJ6S24LTFBVRCDYYVXFUVKDFM.jpg?auth=d7ce2903bc28f61316969a19e31e82adc92bd49ee0b94f3bb960ad2dea57b100&smart=true&height=666)) | Vive USA | Derechos reservados, citada como fuente |
+| Papel picado | `fotos/papel_picado.jpg` | [Papel picado del Dia de Muertos](https://commons.wikimedia.org/wiki/File:Papel_picado_del_D%C3%ADa_de_Muertos.jpg) (Wikimedia Commons) | Carmalvi | CC BY-SA 4.0 |
+| Pan de muerto | `fotos/pan_de_muerto.jpg` | [Receta de pan de muerto](https://www.directoalpaladar.com/recetas-de-panes/receta-de-pan-de-muerto) ([imagen](https://i.blogs.es/c174e2/pan_muerto-magic/840_560.jpg)) | Directo al Paladar | Derechos reservados, citada como fuente |
+| Platillos y jarros | `fotos/platillos.jpg` | [Dia de Muertos: platillos](https://ruptura360.mx/el-estado/dia-de-muertos-platillos/) ([imagen](https://ruptura360.mx/wp-content/uploads/2024/10/Tamales-de-frijol-1-1024x768.jpg)) | Ruptura 360 | Derechos reservados, citada como fuente |
+| Florero | `fotos/florero.jpg` | [Tres hermosas flores indispensables para adornar el altar de Dia de Muertos en tu hogar](https://www.meteored.mx/noticias/actualidad/tres-hermosas-flores-indispensables-para-adornar-el-altar-de-dia-de-muertos-en-tu-hogar.html) ([imagen](https://services.meteored.com/img/article/tres-hermosas-flores-indispensables-para-adornar-el-altar-de-dia-de-muertos-en-tu-hogar-1729640031236_1280.png)) | Meteored Mexico | Derechos reservados, citada como fuente |
+| Catrina | `fotos/catrina.jpg` | [Catrina sculpture](https://commons.wikimedia.org/wiki/File:Catrina-sculpture.jpg) (Wikimedia Commons) | Dominik | CC BY-SA 3.0 |
 
-La imagen de referencia tiene mas de siete objetos. Estos son los que modelamos y texturizamos:
-
-| Objeto en la referencia | Modelo en el proyecto |
-|---|---|
-| Ofrenda de varios niveles con manteles rosas | `assets/models/ofrenda` |
-| Velas | `assets/models/vela` (con su flama, que tambien es luz) |
-| Calaveritas de azucar | `assets/models/calaverita` |
-| Portarretratos con fotos | `assets/models/portarretratos` |
-| Flores de cempasuchil y caminos de petalos | `assets/models/flor_cempasuchil`, `assets/models/petalos_camino` |
-| Papel picado | `assets/models/papel_picado` |
-| Pan de muerto | `assets/models/pan_de_muerto` |
-| Platillos, jarros y frutas | `assets/models/platillos_altar` |
-| Floreros con flores | `assets/models/florero` |
-| Catrina | `assets/models/catrina` |
-
-Para la ambientacion del panteon agregamos ademas la reja de la entrada, la capilla, tumbas, mausoleos, cruces, angeles, arboles, coronas, tapetes de flores, personas visitando a sus difuntos y una banda tocando.
+Las fotos se redujeron a 1000 px como maximo.

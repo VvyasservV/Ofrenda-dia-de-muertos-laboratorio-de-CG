@@ -41,6 +41,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | + y - | Subir o bajar la luz de la luna |
 | 1 | Viento en el papel picado (sencilla) |
 | 2 | Banda tocando (sencilla) |
+| 3 | Reja de la entrada que se abre y se cierra (sencilla) |
 | Esc | Salir |
 
 ## Documentacion
@@ -56,7 +57,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Modelos texturizados | Listo |
 | Imagen de referencia | Listo |
 | Escena del panteon | Listo |
-| 5 animaciones por codigo | 2 de 5 |
+| 5 animaciones por codigo | 3 de 5 |
 | Ejecutable en build/ | Pendiente |
 | Manual de usuario | Pendiente |
 | Manual tecnico | Pendiente |
