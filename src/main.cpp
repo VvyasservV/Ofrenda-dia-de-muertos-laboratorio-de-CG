@@ -1,10 +1,10 @@
 // Proyecto final del laboratorio: Ofrenda de Dia de Muertos en un panteon
-// Basado en el codigo del laboratorio (fuentesDeLuz.cpp): Shader, Camera y Model del profesor.
 // Las animaciones son por codigo, con base en las practicas del laboratorio:
 //   1 viento en el papel picado (sencilla, Animacion basica)
 //   2 banda tocando (sencilla, Animacion basica sobre un modelo jerarquico)
 //   3 reja de la entrada que se abre (sencilla, Animacion basica)
 //   4 nino que saluda (compleja, Maquina de estados)
+//   5 mariposas monarca volando (compleja, KeyFrames con curva suave y aleteo)
 
 #include <iostream>
 #include <fstream>
@@ -85,6 +85,33 @@ float brazoSaludo = 0.0f;    // grados que sube el brazo derecho (0 = abajo, 150
 float manoSaludo = 0.0f;     // grados que se mueve el antebrazo de lado a lado
 bool manoDerecha = true;
 float cabezaSaludo = 0.0f;
+
+// 5: mariposas monarca (KeyFrames, como KeyFrames.cpp). Cada mariposa tiene sus keyframes de posicion alrededor
+// de la ofrenda. Entre dos keyframes la posicion no va en linea recta: se usa una curva de Catmull-Rom que pasa
+// por todos los keyframes, la mariposa voltea hacia donde vuela y las alas aletean con su propia jerarquia.
+#define MAX_FRAMES 8
+#define NUM_MARIPOSAS 3
+const float SEG_POR_TRAMO = 1.0f;          // segundos entre un keyframe y el siguiente
+
+typedef struct _frame
+{
+	float posX;
+	float posY;
+	float posZ;
+} FRAME;
+
+FRAME KeyFrame[NUM_MARIPOSAS][MAX_FRAMES] = {
+	{ { 0.00f, 1.30f, -0.65f }, { 0.92f, 1.63f, -0.17f }, { 1.30f, 1.07f, -0.65f }, { 0.92f, 1.63f, -1.13f },
+	  { 0.00f, 1.30f, -0.65f }, { -0.92f, 0.97f, -0.17f }, { -1.30f, 1.53f, -0.65f }, { -0.92f, 0.97f, -1.13f } },
+	{ { 1.47f, 1.59f, -0.08f }, { 0.43f, 1.31f, -0.98f }, { -0.86f, 1.23f, -1.22f }, { -1.64f, 1.73f, -0.32f },
+	  { -1.47f, 1.01f, -0.08f }, { -0.43f, 1.29f, -0.98f }, { 0.86f, 1.37f, -1.22f }, { 1.64f, 0.87f, -0.32f } },
+	{ { -1.83f, 1.62f, -1.38f }, { -2.02f, 1.06f, -1.06f }, { -1.03f, 1.57f, 0.08f }, { 0.57f, 1.51f, -0.24f },
+	  { 1.83f, 0.98f, -1.38f }, { 2.02f, 1.54f, -1.06f }, { 1.03f, 1.03f, 0.08f }, { -0.57f, 1.09f, -0.24f } }
+};
+bool mariposasOn = false;
+int playIndex = 0;          // keyframe donde empieza el tramo actual
+float tramo = 0.0f;         // 0 a 1: que tanto lleva recorrido del tramo actual
+float tAleteo = 0.0f;
 
 // Parte de un modelo jerarquico (una parte por OBJ con el origen en su articulacion), leido de pivotes.txt
 struct Parte
@@ -316,6 +343,25 @@ void PoseMusico(const std::string &id, int i, float t, float k, std::map<std::st
 	}
 }
 
+// Curva de Catmull-Rom: pasa por p1 (u = 0) y p2 (u = 1); p0 y p3 dan la direccion con la que llega y sale
+glm::vec3 CatmullRom(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, float u)
+{
+	float u2 = u * u, u3 = u2 * u;
+	return 0.5f * ((2.0f * p1) + (-p0 + p2) * u + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * u2 + (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * u3);
+}
+
+glm::vec3 PosKeyFrame(int m, int i)
+{
+	FRAME &f = KeyFrame[m][(i + MAX_FRAMES) % MAX_FRAMES];
+	return glm::vec3(f.posX, f.posY, f.posZ);
+}
+
+// Posicion de la mariposa m en el tramo actual (los keyframes se repiten en ciclo)
+glm::vec3 PosMariposa(int m, float u)
+{
+	return CatmullRom(PosKeyFrame(m, playIndex - 1), PosKeyFrame(m, playIndex), PosKeyFrame(m, playIndex + 1), PosKeyFrame(m, playIndex + 2), u);
+}
+
 int main()
 {
 	// Init GLFW
@@ -490,6 +536,11 @@ int main()
 
 	// 4: nino que saluda (modelo por partes, como el perro de la practica)
 	std::vector<Parte> ninoSaluda = CargaPartes("assets/models/persona_nino_partes");
+
+	// 5: mariposa monarca por partes: cuerpo y dos alas (el origen de las alas esta donde se unen al cuerpo)
+	Model mariposaCuerpo((char*)"assets/models/mariposa/cuerpo.obj");
+	Model mariposaAlaIzq((char*)"assets/models/mariposa/ala_izq.obj");
+	Model mariposaAlaDer((char*)"assets/models/mariposa/ala_der.obj");
 	std::vector<int> orden(luzVela.size());
 
 	// VAO del cubo (skybox)
@@ -709,6 +760,30 @@ int main()
 			giros["cabeza"] = glm::vec3(0.0f, 0.0f, cabezaSaludo);
 			DibujaPartes(ninoSaluda, lugarSaludo, giros, mueve, lightingShader, modelLoc);
 		}
+		for (int m = 0; mariposasOn && m < NUM_MARIPOSAS; m++)
+		{
+			// 5: mariposas. La posicion sale de la curva entre keyframes y la direccion de la tangente de la curva
+			glm::vec3 p = PosMariposa(m, tramo);
+			glm::vec3 adelante = PosMariposa(m, glm::min(tramo + 0.02f, 1.0f)) - PosMariposa(m, glm::max(tramo - 0.02f, 0.0f));
+			float rumbo = atan2(-adelante.x, -adelante.z);                    // el modelo ve hacia -Z
+			float cabeceo = atan2(adelante.y, glm::length(glm::vec2(adelante.x, adelante.z)));
+			glm::mat4 cuerpo = glm::translate(glm::mat4(1.0f), p);
+			cuerpo = glm::rotate(cuerpo, rumbo, glm::vec3(0.0f, 1.0f, 0.0f));
+			cuerpo = glm::rotate(cuerpo, cabeceo, glm::vec3(1.0f, 0.0f, 0.0f));
+			cuerpo = glm::translate(cuerpo, glm::vec3(0.0f, 0.015f * sin(tAleteo * 37.7f + m), 0.0f));   // sube y baja con cada aleteo
+			cuerpo = glm::scale(cuerpo, glm::vec3(2.2f));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cuerpo));
+			mariposaCuerpo.Draw(lightingShader);
+
+			// alas: hijas del cuerpo, giran sobre el eje Z entre 10 y 70 grados (6 aleteos por segundo)
+			float ala = 40.0f + 30.0f * sin(tAleteo * 37.7f + m * 2.1f);
+			glm::mat4 model = glm::rotate(cuerpo, glm::radians(ala), glm::vec3(0.0f, 0.0f, 1.0f));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			mariposaAlaIzq.Draw(lightingShader);
+			model = glm::rotate(cuerpo, glm::radians(-ala), glm::vec3(0.0f, 0.0f, 1.0f));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			mariposaAlaDer.Draw(lightingShader);
+		}
 		glBindVertexArray(0);
 
 		// 1: papel picado con viento (las puntas de los postes no se mueven)
@@ -869,6 +944,18 @@ void AvanzaAnimaciones(float dt)
 		}
 		break;
 	}
+
+	// 5: mariposas; al terminar un tramo pasan al siguiente keyframe y al llegar al ultimo vuelven al primero
+	if (mariposasOn)
+	{
+		tAleteo += dt;
+		tramo += dt / SEG_POR_TRAMO;
+		while (tramo >= 1.0f)
+		{
+			tramo -= 1.0f;
+			playIndex = (playIndex + 1) % MAX_FRAMES;
+		}
+	}
 }
 
 // Moves/alters the camera positions based on user input
@@ -954,6 +1041,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mode
 		if (key == GLFW_KEY_2) bandaOn = !bandaOn;
 		if (key == GLFW_KEY_3) rejaAbierta = !rejaAbierta;
 		if (key == GLFW_KEY_4) saludoOn = !saludoOn;
+		if (key == GLFW_KEY_5) mariposasOn = !mariposasOn;
 	}
 }
 

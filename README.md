@@ -43,6 +43,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | 2 | Banda tocando (sencilla) |
 | 3 | Reja de la entrada que se abre y se cierra (sencilla) |
 | 4 | Nino que saluda con maquina de estados (compleja) |
+| 5 | Mariposas monarca volando alrededor de la ofrenda con keyframes (compleja) |
 | Esc | Salir |
 
 ## Documentacion
@@ -58,7 +59,7 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Modelos texturizados | Listo |
 | Imagen de referencia | Listo |
 | Escena del panteon | Listo |
-| 5 animaciones por codigo | 4 de 5 |
+| 5 animaciones por codigo | Listo |
 | Ejecutable en build/ | Pendiente |
 | Manual de usuario | Pendiente |
 | Manual tecnico | Pendiente |
