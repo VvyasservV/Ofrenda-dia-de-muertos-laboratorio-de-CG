@@ -26,7 +26,11 @@ build/      Ejecutable para la entrega
 
 ## Como compilar
 
-Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. El programa se corre desde la carpeta del proyecto (ahi estan `assets/` y `shaders/`).
+Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. En Release el ejecutable sale directo en `build/` junto con sus DLL.
+
+## Como correr el ejecutable
+
+Dar doble clic en `build/ProyectoFinal.exe`. No hace falta Visual Studio: junto al .exe estan `glew32.dll`, `assimp-vc140-mt.dll` (assimp 4.1.0 compilado en Release), `msvcp140.dll` y `vcruntime140.dll`. El programa busca `assets/` y `shaders/` junto al .exe o en la carpeta de arriba, por eso `build/` debe quedarse dentro del proyecto. Tarda unos 25 segundos en cargar los modelos.
 
 ## Controles
 
@@ -60,6 +64,6 @@ Abrir `ProyectoFinal.slnx` en Visual Studio, elegir Release | Win32 y compilar. 
 | Imagen de referencia | Listo |
 | Escena del panteon | Listo |
 | 5 animaciones por codigo | Listo |
-| Ejecutable en build/ | Pendiente |
+| Ejecutable en build/ | Listo |
 | Manual de usuario | Pendiente |
 | Manual tecnico | Pendiente |

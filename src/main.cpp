@@ -15,6 +15,13 @@
 #include <cmath>
 #include <algorithm>
 
+#ifdef _WIN32
+#include <direct.h>
+#define chdir _chdir
+#else
+#include <unistd.h>
+#endif
+
 // GLEW
 #include <GL/glew.h>
 
@@ -362,8 +369,34 @@ glm::vec3 PosMariposa(int m, float u)
 	return CatmullRom(PosKeyFrame(m, playIndex - 1), PosKeyFrame(m, playIndex), PosKeyFrame(m, playIndex + 1), PosKeyFrame(m, playIndex + 2), u);
 }
 
-int main()
+// Busca la carpeta que tiene assets/ y shaders/ para que el .exe funcione
+// aunque se abra con doble clic desde build/ y no desde Visual Studio
+void BuscaCarpetaDelProyecto(const char *argv0)
 {
+	if (std::ifstream("assets/escena_layout.txt").good())
+	{
+		return;
+	}
+	std::string ruta = argv0 ? argv0 : "";
+	size_t corte = ruta.find_last_of("\\/");
+	std::string carpeta = (corte == std::string::npos) ? "." : ruta.substr(0, corte);
+	const char *opciones[] = { "", "/..", "/../.." };
+	for (const char *o : opciones)
+	{
+		std::string c = carpeta + o;
+		if (std::ifstream(c + "/assets/escena_layout.txt").good())
+		{
+			chdir(c.c_str());
+			return;
+		}
+	}
+	std::cout << "No se encontro la carpeta assets/. Deja el .exe en build/ dentro del proyecto." << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+	BuscaCarpetaDelProyecto(argc > 0 ? argv[0] : nullptr);
+
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
