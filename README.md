@@ -4,6 +4,10 @@ Proyecto final del Laboratorio de Computacion Grafica e Interaccion Humano-Compu
 
 Recreacion en 3D de un panteon mexicano en la noche de Dia de Muertos, hecha en OpenGL 3.3 a partir del codigo base del laboratorio.
 
+## Video
+
+Video explicativo del proyecto: https://youtu.be/TYJ01hJs5oU
+
 ## Integrantes
 
 | Nombre |
@@ -52,7 +56,10 @@ Dar doble clic en `build/ProyectoFinal.exe`. No hace falta Visual Studio: junto 
 
 ## Documentacion
 
+- [Manual de usuario](docs/manual_usuario/manual_usuario.pdf)
+- [Manual tecnico](docs/manual_tecnico/manual_tecnico.pdf)
 - [Imagenes de referencia](docs/referencias/)
+- [Video explicativo](https://youtu.be/TYJ01hJs5oU)
 
 ## Avance
 
@@ -65,5 +72,6 @@ Dar doble clic en `build/ProyectoFinal.exe`. No hace falta Visual Studio: junto 
 | Escena del panteon | Listo |
 | 5 animaciones por codigo | Listo |
 | Ejecutable en build/ | Listo |
-| Manual de usuario | Pendiente |
-| Manual tecnico | Pendiente |
+| Manual de usuario | Listo |
+| Manual tecnico | Listo |
+| Video explicativo | Listo |
